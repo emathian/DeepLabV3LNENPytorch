@@ -61,7 +61,6 @@ class SegmentationModel(BaseModel):
         self.netEnc = networks.define_Enc(opt.netEnc, opt.init_type, opt.init_gain, gpu_ids=self.gpu_ids)
         self.netDec = networks.define_Dec(opt.netDec, opt.init_type, opt.init_gain, opt.fc_dim, opt.num_class,
                       use_softmax=False, gpu_ids=self.gpu_ids)
-        print('************************************************ EMILIE ************************************ \n\n\n', 'self.netEnc', self.netEnc, 'self.netDec' , 'self.netDec', self.netDec  )
         self.deep_sup_scale = opt.deep_sup_scale
         if self.isTrain:  # only defined during training time
             # define your loss functions. You can use losses provided by torch.nn such as torch.nn.L1Loss.
@@ -74,13 +73,11 @@ class SegmentationModel(BaseModel):
                                     lr=0.02,
                                     momentum=0.9,
                                     weight_decay=1e-4)
-            print('************************************************ EMILIE ************************************ \n\n\n', 'self.optimizer_encoder', self.optimizer_encoder  )
             self.optimizer_decoder = torch.optim.SGD(
                                     self.group_weight(self.netDec),
                                     lr=0.02,
                                     momentum=0.9,
                                     weight_decay=1e-4)
-            print('************************************************ EMILIE ************************************ \n\n\n', 'self.optimizer_encoder', self.optimizer_decoder  )
             self.optimizers = [self.optimizer_encoder, self.optimizer_decoder]
             
     def group_weight(self, module):
@@ -119,15 +116,13 @@ class SegmentationModel(BaseModel):
 
     def forward(self):
         """Run forward pass. This will be called by both functions <optimize_parameters> and <test>."""
-        print('************************************************ EMILIE ************************************ \n\n\n IN FORWARD  self.Img', self.Img, self.Img.size())
         self.pred, self.pred_deepsup = self.netDec(self.netEnc(self.Img))  # generate output image given the input data_A
-        print('************************************************ EMILIE ************************************ \n\n\n', 'elf.pred', self.pred.size()   )
+        
 
     def backward(self):
         """Calculate losses, gradients, and update network weights; called in every training iteration"""
         # caculate the intermediate results if necessary; here self.output has been computed during function <forward>
         # calculate loss given the input and intermediate results
-        print('^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^ \n\n\n ' , 'self.Mask' , self.Mask.size(), ' self.pred    ', self.pred.size() )
         self.Mask =  torch.squeeze(self.Mask)
         self.loss_deeplab = self.criterionLoss(self.pred, self.Mask)
         if self.deep_sup_scale is not None:
