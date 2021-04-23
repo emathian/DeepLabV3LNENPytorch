@@ -67,7 +67,6 @@ class SegmentationDataset(BaseDataset):
             (segm_rounded.size[0] // self.segm_downsampling_rate, \
              segm_rounded.size[1] // self.segm_downsampling_rate), \
             interp='nearest')
-        print('segm rounded resize :  ', segm.size)
         
         Img = self.transformImg(Img_i)
         Mask = self.transformMask(segm)

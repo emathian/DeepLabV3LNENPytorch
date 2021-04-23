@@ -487,126 +487,6 @@ class ResnetBlock(nn.Module):
 ##############################################################################################################
 # Emilie ENCODER DeepLabV3+
 ##############################################################################################################
-# def conv3x3(in_planes, out_planes, stride=1):
-#     "3x3 convolution with padding"
-#     return nn.Conv2d(in_planes, out_planes, kernel_size=3, stride=stride,
-#                      padding=1, bias=False)
-
-# class Bottleneck(nn.Module):
-#     expansion = 4
-
-#     def __init__(self, inplanes, planes, dilate=1, stride=1, downsample=None):
-#         super(Bottleneck, self).__init__()
-#         self.conv1 = nn.Conv2d(inplanes, planes, kernel_size=1, bias=False)
-#         self.bn1 = nn.BatchNorm2d(planes)
-#         self.conv2 = nn.Conv2d(planes, planes, kernel_size=3, stride=stride,
-#                                padding=1, bias=False)
-#         self.bn2 = nn.BatchNorm2d(planes)
-#         self.conv3 = nn.Conv2d(planes, planes * 4, kernel_size=1, bias=False)
-#         self.bn3 = nn.BatchNorm2d(planes * 4)
-#         self.relu = nn.ReLU(inplace=True)
-#         self.downsample = downsample
-#         self.stride = stride
-#     def forward(self, x):
-#         residual = x
-
-#         out = self.conv1(x)
-#         out = self.bn1(out)
-#         out = self.relu(out)
-
-#         out = self.conv2(out)
-#         out = self.bn2(out)
-#         out = self.relu(out)
-
-#         out = self.conv3(out)
-#         out = self.bn3(out)
-
-#         if self.downsample is not None:
-#             residual = self.downsample(x)
-
-#         out += residual
-#         out = self.relu(out)
-#         return out
-
-        
-# class ResNet(nn.Module):
-
-#     def __init__(self, block, layers, num_classes=1000):
-#         self.inplanes = 128
-#         super(ResNet, self).__init__()
-#         self.conv1 = conv3x3(3, 64, stride=2)
-#         self.bn1 = nn.BatchNorm2d(64)
-#         self.relu1 = nn.ReLU(inplace=True)
-#         self.conv2 = conv3x3(64, 64)
-#         self.bn2 = nn.BatchNorm2d(64)
-#         self.relu2 = nn.ReLU(inplace=True)
-#         self.conv3 = conv3x3(64, 128)
-#         self.bn3 = nn.BatchNorm2d(128)
-#         self.relu3 = nn.ReLU(inplace=True)
-#         self.maxpool = nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
-
-#         self.layer1 = self._make_layer(block, 64, layers[0])
-#         self.layer2 = self._make_layer(block, 128, layers[1], stride=2)
-#         self.layer3 = self._make_layer(block, 256, layers[2], stride=2)
-#         self.layer4 = self._make_layer(block, 512, layers[3], stride=2)
-#         #self.avgpool = nn.AvgPool2d(7, stride=1) # Useless
-#         #self.fc = nn.Linear(512 * block.expansion, num_classes) # Useless
-        
-        
-#         for m in self.modules():
-#             if isinstance(m, nn.Conv2d):
-#                 n = m.kernel_size[0] * m.kernel_size[1] * m.out_channels
-#                 m.weight.data.normal_(0, math.sqrt(2. / n))
-#             elif isinstance(m, nn.BatchNorm2d):
-#                 m.weight.data.fill_(1)
-#                 m.bias.data.zero_()
-#         self.modules = [self.conv1,
-#                    self.bn1,
-#                    self.relu1,
-#                    self.conv2,
-#                    self.bn2,
-#                    self.relu2,
-#                    self.conv3,
-#                    self.bn3,
-#                    self.relu3,
-#                    self.maxpool,
-#                    self.layer1,
-#                    self.layer2,
-#                    self.layer3,
-#                    self.layer4]
-#         self.model = nn.Sequential(*self.modules)
-
-#     def _make_layer(self, block, planes, blocks, stride=1, dilate=1):
-#         downsample = None
-#         if stride != 1 or self.inplanes != planes * block.expansion:
-#             downsample = nn.Sequential(
-#                 nn.Conv2d(self.inplanes, planes * block.expansion,
-#                           kernel_size=1, stride=stride, bias=False),
-#                 nn.BatchNorm2d(planes * block.expansion),
-#             )
-#         layers = []
-#         layers.append(block(self.inplanes, planes,  dilate, stride, downsample))
-#         self.inplanes = planes * block.expansion
-#         for i in range(1, blocks):
-#             layers.append(block(self.inplanes, planes,  dilate, stride, downsample))
-
-#         return nn.Sequential(*layers)
-#     def forward(self, x):
-#         x = self.relu1(self.bn1(self.conv1(x)))
-#         x = self.relu2(self.bn2(self.conv2(x)))
-#         x = self.relu3(self.bn3(self.conv3(x)))
-#         x = self.maxpool(x)
-
-#         x = self.layer1(x)
-#         x = self.layer2(x)
-#         x = self.layer3(x)
-#         x = self.layer4(x)
-
-#         x = self.avgpool(x)
-#         x = x.view(x.size(0), -1)
-#         x = self.fc(x)
-
-#         return x
 
 class ResNet50Dilated(nn.Module):
     def __init__(self, orig_resnet, dilate_scale=8):
@@ -639,43 +519,27 @@ class ResNet50Dilated(nn.Module):
         if classname.find('Conv') != -1:
             # the convolution with stride
             if m.stride == (2, 2):
-                print('m.stride  ', m.stride )
                 m.stride = (1, 1)
                 if m.kernel_size == (3, 3):
                     m.dilation = (dilate//2, dilate//2)
                     m.padding = (dilate//2, dilate//2)
-                    print('m.dilation ', m.dilation)
-                    print('m.padding  ' , m.padding)
             # other convoluions
             else:
                 if m.kernel_size == (3, 3):
                     m.dilation = (dilate, dilate)
-                    print('m.dilation ', m.dilation)
                     m.padding = (dilate, dilate)
-                    print('m.padding  ' , m.padding)
         
     def forward(self, input, return_feature_maps=True):
         """Standard forward"""
         conv_out = []
-        print("++++++++++++++++++++++++++ EMILIE ++++++++++++++++++++++++++ FORWARD ENCODER \n\n\n")
-        print('\n input.size ', input.size())
         input = self.relu1(self.bn1(self.conv1(input)))
-        print('\n input.size ', input.size())
         input = self.relu2(self.bn2(self.conv2(input)))
-        print('\n input.size ', input.size())
         input = self.relu3(self.bn3(self.conv3(input)))
-        print('\n input.size ', input.size())
         input = self.maxpool(input)
-        print('\n input.size ', input.size())
         input = self.layer1(input); conv_out.append(input);
-        print('\n input.size ', input.size())
         input = self.layer2(input); conv_out.append(input);
-        print('\n input.size ', input.size())
         input = self.layer3(input); conv_out.append(input);
-        print('\n input.size ', input.size())
         input = self.layer4(input); conv_out.append(input);
-        print('\n input.size ', input.size())
-        print('END CONV')
         if return_feature_maps:
             return conv_out
         return self.model(input)
@@ -696,7 +560,6 @@ def conv3x3_bn_relu(in_planes, out_planes, stride=1):
 class PPMDeepsup(nn.Module):
     def __init__(self, num_class=150, fc_dim=2048,
                  use_softmax=False, pool_scales=(1, 2, 3, 6)):
-        print('\n\n\n\n 4444444444444444444444444444444444444444444444444444444444444444444444444444444444444 \n\n\n num_class ', num_class, 'fc_dim ', fc_dim, 'use_softmax ', use_softmax , 'pool_scales ', pool_scales )
         super(PPMDeepsup, self).__init__() 
         self.use_softmax = use_softmax
 
@@ -724,25 +587,18 @@ class PPMDeepsup(nn.Module):
         self.dropout_deepsup = nn.Dropout2d(0.1)
 
     def forward(self, conv_out, segSize=None):
-        print("\n\n+++++++++++++++++++++++++++++++++++++++ DECODER PPMDEEPSUP ++++++++++++++++++++++++++++++++")
         conv5 = conv_out[-1]
-        print('conv5 ' , conv5.size())
         input_size = conv5.size()
-        print('input_size ' , input_size)
         ppm_out = [conv5]
         z =  conv5
-        print('z . sizr()', z.size())
         for pool_scale in self.ppm:
             z = pool_scale(conv5)
-            print('z . sizr()', z.size())
             ppm_out.append(nn.functional.interpolate(
                 pool_scale(conv5),
                 (input_size[2], input_size[3]),
                 mode='bilinear', align_corners=False))
-            print('ppm_out[-1]' , ppm_out[-1].size())
         ppm_out = torch.cat(ppm_out, 1)
         x = self.conv_last(ppm_out)
-        print('x  ', x.size())
         if self.use_softmax:  # is True during inference
             x = nn.functional.interpolate(
                 x, size=segSize, mode='bilinear', align_corners=False)
@@ -751,15 +607,12 @@ class PPMDeepsup(nn.Module):
 
         # deep sup
         conv4 = conv_out[-2]
-        print('conv4  ', conv4)
         _ = self.cbr_deepsup(conv4)
         _ = self.dropout_deepsup(_)
         _ = self.conv_last_deepsup(_)
 
         x = nn.functional.log_softmax(x, dim=1)
         _ = nn.functional.log_softmax(_, dim=1)
-        print('x   ', x.size())
-        print('_ ', _.size())
         return (x, _)
 
     ##########################################################################################################
